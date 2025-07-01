@@ -1,0 +1,7 @@
+# Development dependencies
+flake8
+pylint
+black
+isort
+pre-commit
+bandit
