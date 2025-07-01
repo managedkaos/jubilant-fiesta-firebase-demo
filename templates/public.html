@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Firebase Auth Demo - Public Page{% endblock %}
+
+{% block content %}
+{% if user %}
+<div class="welcome">
+    <h3>Welcome, {{ user.email }}!</h3>
+    <p>You are logged in and can access private pages.</p>
+    <button onclick="logout()" class="btn btn-danger">Logout</button>
+</div>
+{% else %}
+<div class="auth-section">
+    <h3>This is a publicly accessible page. Please log in to access private features.</h3>
+
+    <!-- Google Sign-in Button -->
+    <div id="g_id_onload"
+        data-client_id="{{ google_client_id or (firebase_config.authDomain.split('.')[0] + '.apps.googleusercontent.com') }}"
+        data-callback="handleGoogleSignIn" data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with"
+        data-shape="rectangular" data-logo_alignment="left">
+    </div>
+
+    <div class="auth-divider">
+        <span>- or -</span>
+    </div>
+
+    <button onclick="showLoginForm()" class="btn btn-primary">Login with Email</button>
+    <button onclick="showSignupForm()" class="btn btn-success">Sign Up with Email</button>
+
+    <div id="loginForm">
+        <h4>Login with Email</h4>
+        <div class="form-group">
+            <input type="email" id="loginEmail" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+            <input type="password" id="loginPassword" placeholder="Password" required>
+        </div>
+        <button onclick="login()" class="btn btn-primary">Login</button>
+    </div>
+
+    <div id="signupForm">
+        <h4>Sign Up with Email</h4>
+        <div class="form-group">
+            <input type="email" id="signupEmail" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+            <input type="password" id="signupPassword" placeholder="Password" required>
+        </div>
+        <button onclick="signup()" class="btn btn-success">Sign Up</button>
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top: 30px;">
+    <h3>Features Demo</h3>
+    <ul>
+        <li>✅ Public page (this page)</li>
+        <li>✅ Firebase authentication (Email & Google)</li>
+        <li>✅ Private pages (Dashboard & Profile)</li>
+        <li>✅ User data persistence with Firestore</li>
+        <li>✅ Session management</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+function showLoginForm() {
+document.getElementById('loginForm').style.display = 'block';
+document.getElementById('signupForm').style.display = 'none';
+}
+
+function showSignupForm() {
+document.getElementById('signupForm').style.display = 'block';
+document.getElementById('loginForm').style.display = 'none';
+}
+
+async function handleGoogleSignIn(response) {
+try {
+// Get the ID token from Google
+const credential = response.credential;
+
+// Sign in to Firebase with Google credential
+const userCredential = await firebase.auth().signInWithCredential(
+firebase.auth.GoogleAuthProvider.credential(credential)
+);
+
+const idToken = await userCredential.user.getIdToken();
+
+// Send token to backend
+const backendResponse = await fetch('/auth/google-login', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+'Authorization': `Bearer ${idToken}`
+}
+});
+
+if (backendResponse.ok) {
+window.location.reload();
+} else {
+alert('Google login failed');
+}
+} catch (error) {
+console.error('Google sign-in error:', error);
+alert('Google sign-in error: ' + error.message);
+}
+}
+
+async function login() {
+const email = document.getElementById('loginEmail').value;
+const password = document.getElementById('loginPassword').value;
+
+try {
+const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+const idToken = await userCredential.user.getIdToken();
+
+// Send token to backend
+const response = await fetch('/auth/login', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+'Authorization': `Bearer ${idToken}`
+}
+});
+
+if (response.ok) {
+window.location.reload();
+} else {
+alert('Login failed');
+}
+} catch (error) {
+alert('Login error: ' + error.message);
+}
+}
+
+async function signup() {
+const email = document.getElementById('signupEmail').value;
+const password = document.getElementById('signupPassword').value;
+
+try {
+const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+const idToken = await userCredential.user.getIdToken();
+
+// Send token to backend
+const response = await fetch('/auth/signup', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+'Authorization': `Bearer ${idToken}`
+}
+});
+
+if (response.ok) {
+window.location.reload();
+} else {
+alert('Signup failed');
+}
+} catch (error) {
+alert('Signup error: ' + error.message);
+}
+}
+
+async function logout() {
+try {
+await firebase.auth().signOut();
+const response = await fetch('/auth/logout', { method: 'POST' });
+if (response.ok) {
+window.location.reload();
+}
+} catch (error) {
+alert('Logout error: ' + error.message);
+}
+}
+{% endblock %}

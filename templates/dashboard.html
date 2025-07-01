@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Private Page{% endblock %}
+
+{% block content %}
+<h1>📊 Dashboard</h1>
+<p>This is a private page - only visible when logged in!</p>
+
+<div class="dashboard-card">
+    <h3>Your Account Information</h3>
+    {% if user_data and user_data.photo_url %}
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="{{ user_data.photo_url }}" alt="Profile Picture" class="profile-picture small">
+    </div>
+    {% endif %}
+    <p><strong>Email:</strong> {{ user.email or 'N/A' }}</p>
+    <p><strong>User ID:</strong> {{ user.uid or 'N/A' }}</p>
+    <p><strong>Last Login:</strong> {{ user_data.last_login if user_data else 'N/A' }}</p>
+    {% if user_data and user_data.auth_provider %}
+    <p><strong>Sign-in Method:</strong> {{ user_data.auth_provider|title }}</p>
+    {% endif %}
+</div>
+
+<div class="stats">
+    <div class="stat-card">
+        <h3>🎯 Total Logins</h3>
+        <p style="font-size: 2em; color: #007bff;">{{ user_data.login_count if user_data else 1 }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>📅 Member Since</h3>
+        <p style="font-size: 1.2em; color: #28a745;">{{ user_data.created_at if user_data else 'Today' }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>⚙️ Preferences</h3>
+        <p style="font-size: 1.2em; color: #ffc107;">{{ user_data.preferences|length if user_data and
+            user_data.preferences else 0 }} settings</p>
+    </div>
+</div>
+
+<div class="dashboard-card">
+    <h3>Quick Actions</h3>
+    <button onclick="window.location.href='/profile'" class="btn btn-primary">Edit Profile</button>
+    <button onclick="updatePreferences()" class="btn btn-primary">Update Preferences</button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+async function logout() {
+const response = await fetch('/auth/logout', { method: 'POST' });
+if (response.ok) {
+window.location.href = '/';
+}
+}
+
+async function updatePreferences() {
+const response = await fetch('/api/update-preferences', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+theme: 'dark',
+notifications: false
+})
+});
+
+if (response.ok) {
+alert('Preferences updated!');
+window.location.reload();
+}
+}
+{% endblock %}

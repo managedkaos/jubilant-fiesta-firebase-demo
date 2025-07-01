@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Private Page{% endblock %}
+
+{% block content %}
+<h1>👤 Profile</h1>
+<p>Manage your account settings and preferences</p>
+
+<div class="profile-card">
+    <h3>Personal Information</h3>
+    {% if user_data and user_data.photo_url %}
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="{{ user_data.photo_url }}" alt="Profile Picture" class="profile-picture large">
+    </div>
+    {% endif %}
+    <div class="form-group">
+        <label for="name">Display Name</label>
+        <input type="text" id="name" value="{{ user_data.name if user_data else '' }}" placeholder="Enter your name">
+    </div>
+    <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" value="{{ user.email or '' }}" readonly>
+        {% if user_data and user_data.email_verified %}
+        <small style="color: green;">✓ Email verified</small>
+        {% endif %}
+    </div>
+    {% if user_data and user_data.auth_provider %}
+    <div class="form-group">
+        <label>Authentication Provider</label>
+        <input type="text" value="{{ user_data.auth_provider|title }}" readonly style="background-color: #f8f9fa;">
+    </div>
+    {% endif %}
+    <button onclick="updateProfile()" class="btn btn-primary">Update Profile</button>
+</div>
+
+<div class="profile-card">
+    <h3>Preferences</h3>
+    <div class="preferences">
+        <div>
+            <label>
+                <input type="checkbox" id="notifications" {% if user_data and user_data.preferences and
+                    user_data.preferences.notifications %}checked{% endif %}>
+                Enable Notifications
+            </label>
+        </div>
+        <div>
+            <label for="theme">Theme</label>
+            <select id="theme">
+                <option value="light" {% if user_data and user_data.preferences and user_data.preferences.theme=='light'
+                    %}selected{% endif %}>
+                    Light
+                </option>
+                <option value="dark" {% if user_data and user_data.preferences and user_data.preferences.theme=='dark'
+                    %}selected{% endif %}>
+                    Dark
+                </option>
+            </select>
+        </div>
+    </div>
+    <button onclick="updatePreferences()" class="btn btn-primary">Save Preferences</button>
+</div>
+
+<div class="profile-card">
+    <h3>Account Statistics</h3>
+    <p><strong>User ID:</strong> {{ user.uid or 'N/A' }}</p>
+    <p><strong>Created:</strong> {{ user_data.created_at if user_data else 'N/A' }}</p>
+    <p><strong>Last Login:</strong> {{ user_data.last_login if user_data else 'N/A' }}</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+async function logout() {
+const response = await fetch('/auth/logout', { method: 'POST' });
+if (response.ok) {
+window.location.href = '/';
+}
+}
+
+async function updateProfile() {
+const name = document.getElementById('name').value;
+const response = await fetch('/api/update-profile', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ name: name })
+});
+
+if (response.ok) {
+alert('Profile updated successfully!');
+} else {
+alert('Failed to update profile');
+}
+}
+
+async function updatePreferences() {
+const notifications = document.getElementById('notifications').checked;
+const theme = document.getElementById('theme').value;
+
+const response = await fetch('/api/update-preferences', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+notifications: notifications,
+theme: theme
+})
+});
+
+if (response.ok) {
+alert('Preferences updated successfully!');
+} else {
+alert('Failed to update preferences');
+}
+}
+{% endblock %}

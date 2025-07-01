@@ -18,6 +18,9 @@ class Config:
         "measurementId": os.getenv("FIREBASE_MEASUREMENT_ID", None)
     }
 
+    # Google OAuth Configuration
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", None)
+
     # Session Configuration
     SECRET_KEY = os.getenv("SECRET_KEY", None)
     SESSION_MAX_AGE = 3600  # 1 hour
