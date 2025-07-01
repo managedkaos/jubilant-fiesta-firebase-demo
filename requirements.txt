@@ -1,0 +1,8 @@
+fastapi
+python-fasthtml
+firebase-admin
+python-multipart
+uvicorn
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
